@@ -20,7 +20,7 @@
 				margin-top: 11px;
 			}
 			#my_list .my_list_inner {
-				width: 100%;
+				width: 38%;
 				height: 100%;
 				position: relative;
 			}
@@ -103,9 +103,9 @@
 					<div class="my_list_inner list" tapmode onclick="open_time_selector()" id='list'>
 						<a> 时间-时间 </a>
 					</div>
-					<!--div class="my_list_inner ticket" tapmode onclick="open_time_int()" id="tiecket">
-						<a> 时间-分钟 </a>
-					</div-->
+					<div class="my_list_inner ticket" tapmode onclick="open_work_time()" id="tiecket">
+						<a> 排班表 </a>
+					</div->
 				</div>
 				<div class="etc" id="ratio">
 					<span id="ratio_1"></span>
@@ -181,6 +181,7 @@
 		{
 			var etc = $api.byId("etc");
 			etc.innerHTML = "";
+			close_tips();
 		}
 		function show_result(data,show) {
 			var $result = $api.byId('result');
@@ -216,6 +217,8 @@
 				UIInput.value({
 		    			msg: "计算结果："+data
 				});
+			}else {
+				UIInput.hide();
 			}
 
 
@@ -246,6 +249,7 @@
 			*/
 			ratio.innerHTML='<label>关闭/打开滚轮</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right" checked id="selector" onchange="change_ratio_type()"、>';
 			change_ratio_type();
+			open_cal(false);
 
 		}
 
@@ -264,12 +268,12 @@
 			tips.innerHTML = '';
 			}
 		}
-function close_tips(){
-var tips  = $api.byId("tips");
-tips.innerHTML = "";
-}
+		function close_tips(){
+			var tips  = $api.byId("tips");
+			tips.innerHTML = "";
+		}
 		function open_time_input(show,int_type) {
-
+		open_cal(false);
 		var input = $api.byId("etc");
 		var str1='\
 		<br/>\
@@ -300,33 +304,131 @@ tips.innerHTML = "";
 			</div>\
 	</div>';
 		}
-		input.innerHTML = str1;
+		if(show)
+			input.innerHTML = str1;
+		else
+			input.innerHTML = "";
 
-}
+		}
 
 
+		function reset_cal(){
 
-//
-function open_time_int() {
-	var ratio = $api.byId("ratio_1");
-	ratio.innerHTML = "";
-	var periodSelector = api.require('periodSelector');
-	periodSelector.hide();
-	open_time_input(true,true);
-}
-function clear_data() {
+		}
 
-}
-		apiready = function() {
-			api.setRefreshHeaderInfo({
-				visible : true,
-				textDown : "清空数据",
-				textUp : "已清空",
-				showTime : true
-			}, function(ret, err) {
-				//coding...
-				//alert("go go go....");
+		function write_setting()
+		{
+		}
+		function load_setting()
+		{
+		}
 
+		function open_cal(show)
+		{
+			if(show)
+			{
+					var $position_cal = $api.byId("etc");
+					$api.fixIos7Bar($position_cal);
+					var header_h = $api.offset($position_cal).h;
+
+					show_result("",false);
+
+					var UICalendar = api.require('UICalendar');
+					UICalendar.open({
+					    rect: {
+					      x: (api.winWidth -api.frameWidth+60)/2,
+					    	  y:header_h+80,
+					        w: api.frameWidth - 60,
+					        h: 340
+					    },
+					    styles: {
+					        bg: 'rgba(0,0,0,0)',
+					        week: {
+					            weekdayColor: '#aabbee',
+					            weekendColor: '#a8d400',
+					            size: 12
+					        },
+					        date: {
+					            color: '#3b3b3b',
+					            selectedColor: '#fff',
+					            selectedBg: '#aaeebb',
+					            size: 12
+					        },
+					        today: {
+					            color: 'rgb(230,46,37)',
+					            bg: ''
+					        },
+					        specialDate: {
+					            color: '#aabbee',
+					            bg: '#ffeecc'
+					        }
+					    },
+					    specialDates:[{ date:'2016-05-12'},{date: '2016-05-13'}, {date:'2016-05-11'}],
+					    switchMode: 'horizontal',
+					    fixedOn: api.frameName,
+					    fixed: false
+					}, function(ret, err){
+					    if( ret ){
+					        show_date(ret,true);
+					    }else{
+					         alert( JSON.stringify( err ) );
+					    }
+					});
+
+				UICalendar.setSpecialDates({
+				    specialDates:[{ date:'2016-05-07',
+					            bg: unworkColor},{date: '2016-05-09',bg:workColor}, {date:'2016-05-11',bg:offDutyColor}]
+				});
+				UICalendar.setSpecialDates({
+				    specialDates:[{ date:'2016-05-17',
+					            bg:offDutyColor },{date: '2016-05-29'}, {date:'2016-05-30'}]
+				});
+
+
+				}else {
+					var UICalendar = api.require('UICalendar');
+					UICalendar.hide();
+				}
+
+		}
+
+		//排班表
+		function open_work_time() {
+			var ratio = $api.byId("ratio_1");
+			ratio.innerHTML = "";
+			var periodSelector = api.require('periodSelector');
+			periodSelector.hide();
+			open_time_input(false,false);
+			open_cal(true);
+
+		}
+
+		var day_clicked={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0};
+		// status:0 休 1 下 3上
+		var day_status = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0};
+
+		var workColor='#ee55cc'
+		var offDutyColor='#ee55cc'
+		var unworkColor='#cceecc'
+		function show_date(data,show) {
+		var pre="";
+
+					  day_clicked[data.day]++;
+				if(data.day != null)
+				{
+					if(day_clicked[data.day]%3 == 0)
+						pre="上 " + day_clicked[data.day];
+				    else if(day_clicked[data.day]%2 == 0)
+						 pre = "下 "+ day_clicked[data.day];
+				    else
+						  pre = "休 "+ day_clicked[data.day];
+
+					show_tips("type:"+pre+" "+data.year + "-" +data.month+"-"+data.day,show);
+				} else {
+					show_tips("type:"+pre+"  "+data.year + "-" +data.month,show);
+				}
+		}
+		function clear_data() {
 				var periodSelector = api.require('periodSelector');
 				periodSelector.set({lHour:0,lMinute:0,rHour:0,rMinute:0});
 			    var obj = document.getElementById("start_time");
@@ -336,8 +438,18 @@ function clear_data() {
 					obj.value="";
 				 	document.getElementById("end_time").value = "";
 				}
-				show_result("",true);
+				show_result("",false);
 				close_tips();
+		}
+
+		apiready = function() {
+			api.setRefreshHeaderInfo({
+				visible : true,
+				textDown : "清空数据",
+				textUp : "已清空",
+				showTime : true
+			}, function(ret, err) {
+				clear_data();
 				api.refreshHeaderLoadDone();
 			});
 			var periodSelector = api.require('periodSelector');
