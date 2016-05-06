@@ -239,6 +239,7 @@
 				open_time_input(true,false);
 				show_result("",true);
 			}
+			open_cal(false);
 		}
 
 		function open_time_selector() {
@@ -249,7 +250,6 @@
 			*/
 			ratio.innerHTML='<label>关闭/打开滚轮</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right" checked id="selector" onchange="change_ratio_type()"、>';
 			change_ratio_type();
-			open_cal(false);
 
 		}
 
@@ -325,68 +325,27 @@
 
 		function open_cal(show)
 		{
-			if(show)
+			var UICalendar = api.require('UICalendar');
+			if(show==true)
 			{
-					var $position_cal = $api.byId("etc");
-					$api.fixIos7Bar($position_cal);
-					var header_h = $api.offset($position_cal).h;
+			   show_result("",false);
 
-					show_result("",false);
-
-					var UICalendar = api.require('UICalendar');
-					UICalendar.open({
-					    rect: {
-					      x: (api.winWidth -api.frameWidth+60)/2,
-					    	  y:header_h+80,
-					        w: api.frameWidth - 60,
-					        h: 340
-					    },
-					    styles: {
-					        bg: 'rgba(0,0,0,0)',
-					        week: {
-					            weekdayColor: '#aabbee',
-					            weekendColor: '#a8d400',
-					            size: 12
-					        },
-					        date: {
-					            color: '#3b3b3b',
-					            selectedColor: '#fff',
-					            selectedBg: '#aaeebb',
-					            size: 12
-					        },
-					        today: {
-					            color: 'rgb(230,46,37)',
-					            bg: ''
-					        },
-					        specialDate: {
-					            color: '#aabbee',
-					            bg: '#ffeecc'
-					        }
-					    },
-					    specialDates:[{ date:'2016-05-12'},{date: '2016-05-13'}, {date:'2016-05-11'}],
-					    switchMode: 'horizontal',
-					    fixedOn: api.frameName,
-					    fixed: false
-					}, function(ret, err){
-					    if( ret ){
-					        show_date(ret,true);
-					    }else{
-					         alert( JSON.stringify( err ) );
-					    }
-					});
-
+				UICalendar.show();
 				UICalendar.setSpecialDates({
-				    specialDates:[{ date:'2016-05-07',
-					            bg: unworkColor},{date: '2016-05-09',bg:workColor}, {date:'2016-05-11',bg:offDutyColor}]
-				});
-				UICalendar.setSpecialDates({
-				    specialDates:[{ date:'2016-05-17',
-					            bg:offDutyColor },{date: '2016-05-29'}, {date:'2016-05-30'}]
+				    specialDates:[{
+				    						date:'2016-05-01',
+				    						bg: workColor
+				    					},{
+				    						date: '2016-05-02',
+				    						bg:offDutyColor
+				    					}, {
+				    						date:'2016-05-03',
+				    						bg:unworkColor
+				    					}]
 				});
 
 
 				}else {
-					var UICalendar = api.require('UICalendar');
 					UICalendar.hide();
 				}
 
@@ -403,26 +362,38 @@
 
 		}
 
+
 		var day_clicked={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0};
-		// status:0 休 1 下 3上
+		// status:01休 2 下 3上
 		var day_status = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0,21:0,22:0,23:0,24:0,25:0,26:0,27:0,28:0,29:0,30:0,31:0};
 
-		var workColor='#ee55cc'
-		var offDutyColor='#ee55cc'
-		var unworkColor='#cceecc'
-		function show_date(data,show) {
-		var pre="";
+		var workColor='#ee55cc'  //上班
+		var offDutyColor='#ffeecc' //下班
+		var unworkColor='#cceecc' //休息
+		//当前显示的月份中第一天什么状态，以便后退计算
+		var monthFirstDayStatus=0;
+		//当前显示的月份中最后一天什么状态，以便前进计算
+		var monthLastDayStatus=0;
 
-					  day_clicked[data.day]++;
+		function show_select_date(data,show) {
+				var pre="";
+
+				day_clicked[data.day]++;
 				if(data.day != null)
 				{
-					if(day_clicked[data.day]%3 == 0)
+					if(day_clicked[data.day]%4 == 3) {
 						pre="上 " + day_clicked[data.day];
-				    else if(day_clicked[data.day]%2 == 0)
+						genWorkDates(3,data);
+						day_clicked[data.day]++;
+				    }else if(day_clicked[data.day]%4 == 2){
 						 pre = "下 "+ day_clicked[data.day];
-				    else
+						 genWorkDates(2,data);
+				   } else if(day_clicked[data.day]%4 == 1){
 						  pre = "休 "+ day_clicked[data.day];
+						  genWorkDates(1,data);
+					} else {
 
+					}
 					show_tips("type:"+pre+" "+data.year + "-" +data.month+"-"+data.day,show);
 				} else {
 					show_tips("type:"+pre+"  "+data.year + "-" +data.month,show);
@@ -441,7 +412,86 @@
 				show_result("",false);
 				close_tips();
 		}
+		//传进月份，返回该月最大天数
+		function getDaysOfMonth(month) {
+				switch(month) {
+					case 1:
+					case 3:
+					case 5:
+					case 7:
+					case 8:
+					case 10:
+					case 12:
+					{
+						return 31;
+					}
+					case 2:
+					{
+						if((year % 400 == 0)||(year % 4 == 0)&&(year % 100 != 0))
+							return 29; //闰年
+						else
+							return 28;
+					}
+					default:
+					{
+						return 30;
+					}
+				}
+		}
+		function format_color(color,date) {
+			var rawType=color;
+			if(color == 1)
+				color = unworkColor;
+			else if(color == 2)
+				color = workColor ;
+			else if(color == 3)
+				color = offDutyColor;
+			//alert(JSON.stringify( [{bg:color,date:date.year+'-'+date.month+'-'+date.day}]));
+			return {bg:color,date:date.year+'-'+date.month+'-'+date.day,type:rawType};
+		}
+		//// status:0 休 1 下 3上:参数说明表示date这一天是type状态（上、下、休）
+		function genWorkDates(type,date) {
+			var days = getDaysOfMonth(date.month);
 
+			var array= new Array;
+			var clear_array = new Array;
+			array[0] = format_color(type,date);
+			clear_array[0]=date.year+"-"+date.month+"-"+date.day;
+			if((type=(++type%4)) ==0)
+					type =1;
+
+			var msg;
+			for(var day=date.day+1,index=1;day<=days;day++)
+			{
+
+				date.day=day;
+				array[index++]=format_color(type,date);
+				clear_array[index-1]=date.year+"-"+date.month+"-"+date.day;
+				monthLastDayStatus = type;
+				type=(++type%4);
+				if(type ==0)
+					type =1;
+
+			}
+			var specialDays = {specialDates:array};
+			clearSpecialDays({specialDates:clear_array});
+			alert(JSON.stringify(specialDays));
+			setSpecialDays(specialDays);
+		}
+		function clearSpecialDays(data) {
+			   var UICalendar = api.require('UICalendar');
+
+				UICalendar.show();
+				show_tips(data);
+				UICalendar.cancelSpecialDates(data);
+		}
+		function setSpecialDays(data) {
+			   var UICalendar = api.require('UICalendar');
+
+				UICalendar.show();
+				show_tips(data);
+				UICalendar.setSpecialDates(data);
+		}
 		apiready = function() {
 			api.setRefreshHeaderInfo({
 				visible : true,
@@ -470,6 +520,55 @@
 			periodSelector.hide();
 
 			open_time_selector();
+
+
+			var $position_cal = $api.byId("etc");
+			$api.fixIos7Bar($position_cal);
+			var position_cal = $api.offset($position_cal).h;
+
+			var UICalendar = api.require('UICalendar');
+					UICalendar.open({
+					    rect: {
+					      x: (api.winWidth -api.frameWidth+60)/2,
+					    	  y:position_cal+80,
+					        w: api.frameWidth - 60,
+					        h: 340
+					    },
+					    styles: {
+					        bg: 'rgba(0,0,0,0)',
+					        week: {
+					            weekdayColor: '#aabbee',
+					            weekendColor: '#a8d400',
+					            size: 12
+					        },
+					        date: {
+					            color: '#3b3b3b',
+					            selectedColor: '#fff',
+					            selectedBg: '#aaeebb',
+					            size: 12
+					        },
+					        today: {
+					            color: 'rgb(230,46,37)',
+					            bg: ''
+					        },
+					        specialDate: {
+					            color: '#aabbee',
+					            bg: '#ffeecc'
+					        }
+					    },
+					  //  specialDates:[{ date:'2016-05-12'},{date: '2016-05-13'}, {date:'2016-05-11'}],
+					    switchMode: 'horizontal',
+					    fixedOn: api.frameName,
+					    fixed: false
+					}, function(ret, err){
+					    if( ret ){
+					        show_select_date(ret,true);
+					    }else{
+					         alert( JSON.stringify( err ) );
+					    }
+					});
+					UICalendar.hide();
+
 		};
 	</script>
 </html>
