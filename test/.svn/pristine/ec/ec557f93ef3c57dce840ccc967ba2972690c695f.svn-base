@@ -1,0 +1,363 @@
+<!doctype html>
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../css/aui.css" />
+	<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<title>frame</title>
+		<link rel="stylesheet" type="text/css" href="../css/api.css" />
+		<style>
+			body, html {
+				background-color: #ffffff;
+			}
+			#main {
+				padding: 1em;
+			}
+			/*我的订单等*/
+			#my_list {
+				width: 100%;
+				height: 90px;
+				margin-top: 11px;
+			}
+			#my_list .my_list_inner {
+				width: 100%;
+				height: 100%;
+				position: relative;
+			}
+			#my_list .my_list_inner a {
+				color: #6ab494;
+				text-align: center;
+				width: 90%;
+				position: absolute;
+				bottom: 10px;
+			}
+			#my_list .my_list_inner_select a {
+				color: #6a1194;
+				text-align: center;
+				width: 90%;
+				position: absolute;
+				bottom: 10px;
+			}
+
+			#my_list .list {
+				float: left;
+				background: #E5E5E5 url(../image/title.png) center 15px no-repeat;
+				background-size: 45px;
+			}
+			#my_list .ticket {
+				float: right;
+				background: #E5E5E5 url(../image/title.png) center 15px no-repeat;
+				background-size: 45px;
+			}
+			#my_list .ticket_select {
+				float: right;
+				background: #E5E5E5 url(../image/title.png) center 15px no-repeat;
+				background-size: 45px;
+			}
+			/*我的订单等end*/
+			/*其它*/
+			.etc {
+				width: 100%;
+				height: 90%;
+				margin-top: 12px;
+			}
+			.etc .title {
+				height: 38px;
+				line-height: 38px;
+				color: #616161;
+				display: block;
+			}
+			.etc .coupon, .etc .options {
+				display: block;
+				height: 45px;
+				line-height: 45px;
+				color: #323237;
+				background-color: #E5E5E5;
+				margin-bottom: 5px;
+				text-indent: 15px;
+			}
+			.etc .count {
+				color: #EFB501;
+				text-indent: 0;
+			}
+
+			    #footer{
+        height: 50px;
+		line-height: 30px;
+
+        width: 100%;
+        text-align: center;
+        position: absolute;
+        bottom:0px;
+    }
+    #footer h5{
+        color: white;
+    }
+			/*其它end*/
+		</style>
+	</head>
+	<body>
+		<div id="wrap">
+			<div id="main">
+				<div id="my_list">
+					<div class="my_list_inner list" tapmode onclick="open_time_selector()" id='list'>
+						<a> 时间-时间 </a>
+					</div>
+					<!--div class="my_list_inner ticket" tapmode onclick="open_time_int()" id="tiecket">
+						<a> 时间-分钟 </a>
+					</div-->
+				</div>
+				<div class="etc" id="ratio">
+					<span id="ratio_1"></span>
+				</div>
+				<div class="etc" id="result">
+					<h3><span id="ret"></span></h3>
+				</div>
+				<div class="etc" id='etc'>
+					<span id="input"></span>
+				</div>
+			</div>
+		 <div id="footer">
+            <span id="tips"></span>
+        </div>
+		</div>
+	</body>
+
+
+
+
+	<script type="text/javascript" src="../script/api.js"></script>
+	<script type="text/javascript">
+		function calTimeTime(data) {
+			var result = $api.byId('ret');
+			bHour = data.sHour;
+			bMinute = data.sMinute;
+			eHour = data.eHour;
+			eMinute = data.eMinute;
+			var date1 = new Date();
+			//开始时间
+			var time1 = (new Date(date1.getYear() + "/" + date1.getMonth() + "/" + date1.getDay() + " " + bHour + ":" + bMinute + ":10")).getTime()
+			var time2 = (new Date(date1.getYear() + "/" + date1.getMonth() + "/" + date1.getDay() + " " + eHour + ":" + eMinute + ":10")).getTime()
+			var date3 = time1 - time2//时间差的毫秒数
+			if (date3 < 0) {
+				//result.innerHTML = "输入有误，开始时间必须大于结束时间"
+				//var result_str = "输入有误，开始时间必须大于结束时间";
+					//show_result(result_str,true);
+					date3 = 0- date3;
+			}
+			 {
+				//计算出小时数
+				var leave1 = date3 % (24 * 3600 * 1000)//计算天数后剩余的毫秒数
+				var hours = Math.floor(leave1 / (3600 * 1000))
+				//计算相差分钟数
+				var leave2 = leave1 % (3600 * 1000)//计算小时数后剩余的毫秒数
+				var minutes = Math.floor(leave2 / (60 * 1000))
+				if (date3 != 0 && (bHour != 0 || bMinute != 0 || eHour != 0 || eMinute != 0 )) {
+					//esult.innerHTML = '计算结果：' + hours + " 小时" + minutes + " 分钟";
+					var totalMinute = hours*60 + minutes;
+					var result_str = hours + " 小时" + minutes + " 分钟 = "+ totalMinute + " 分钟";
+					show_result(result_str,true);
+					show_tips(bHour + ":" + bMinute +" - " +eHour + ":" + eMinute+"="+result_str,true);
+				}
+			}
+		}
+		function input_cal_time() {
+
+			var start = document.getElementById("start_time").value;
+			var end = document.getElementById("end_time").value;
+			var sStart = start.split(":");
+			var sEnd   = end.split(":");
+			if(sStart.length< 2) {show_result("开始时间输入格式错误，应为：HH:MM",true); return ;}
+			if(sEnd.length< 2) {show_result("结束时间输入格式错误，应为：HH:MM",true); return ;}
+			if(sStart[0] >23) {show_result("开始时间输入格式错误，小时最大为23小时",true); return ;}
+			if(sStart[1] >59) {show_result("开始时间输入格式错误，分钟最大59分钟",true); return ;}
+			if(sEnd[0] >23) {show_result("开始时间输入格式错误，小时最大为23小时",true); return ;}
+			if(sEnd[1] >59) {show_result("开始时间输入格式错误，分钟最大59分钟",true); return ;}
+
+			var data ={ "sHour" :sStart[0],"sMinute":sStart[1],"eHour" :sEnd[0],"eMinute":sEnd[1]};
+			calTimeTime(data);
+		}
+		function clear_input()
+		{
+			var etc = $api.byId("etc");
+			etc.innerHTML = "";
+		}
+		function show_result(data,show) {
+			var $result = $api.byId('result');
+			$api.fixIos7Bar($result);
+			var $header_h = $api.offset($result).h;
+			var UIInput = api.require('UIInput');
+			UIInput.open({
+			     rect: {
+			        x: 10,
+			        y: $header_h + 150,
+			        w: api.winWidth,
+			        h: 40
+			    },
+			    styles: {
+			        bgColor: '#fff',
+			        size: 14,
+			        color: '#000',
+			        placeholder: {
+			            color: '#ccc'
+			        }
+			    },
+			    autoFocus: false,
+			    maxRows: 1,
+			    placeholder: '这是一个输入框',
+			    keyboardType: 'number',
+			    fixedOn: api.frameName,
+			    readOnly:true
+			}, function(ret, err){
+			});
+			if(show == true)
+			{
+				UIInput.show();
+				UIInput.value({
+		    			msg: "计算结果："+data
+				});
+			}
+
+
+		}
+
+		function change_status(type){
+
+		}
+
+		function change_ratio_type() {
+			var periodSelector = api.require('periodSelector');
+			if (document.getElementById("selector").checked == true) {
+				clear_input();
+				periodSelector.show();
+				show_result("",true);
+			} else  {
+				periodSelector.hide();
+				open_time_input(true,false);
+				show_result("",true);
+			}
+		}
+
+		function open_time_selector() {
+			var ratio = $api.byId("ratio_1");
+			/*ratio.innerHTML = '<label>选择类型</label>'+
+												'<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="selector" checked onchange="change_ratio_type()"  placeholder="开始时间"/> '+
+												 '<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="input" checked onchange="change_ratio_type()" value="输入框"> i</input>';
+			*/
+			ratio.innerHTML='<label>关闭/打开滚轮</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right" checked id="selector" onchange="change_ratio_type()"、>';
+			change_ratio_type();
+
+		}
+
+		function show_tips(msg,show) {
+
+			var tips  = $api.byId("tips");
+			if(show)
+			{
+			tips.innerHTML = '			<div class="aui-tips">\
+				<div class="aui-tips-content aui-ellipsis-1" >\
+					<i class="aui-iconfont aui-icon-warnfill"></i>'+msg+'\
+					<i class="aui-iconfont aui-icon-roundclosefill" onclick="close_tips()"></i>\
+				</div>\
+			</div>';
+			} else {
+			tips.innerHTML = '';
+			}
+		}
+function close_tips(){
+var tips  = $api.byId("tips");
+tips.innerHTML = "";
+}
+		function open_time_input(show,int_type) {
+
+		var input = $api.byId("etc");
+		var str1='\
+		<br/>\
+		<br/>\
+		<div class="aui-form">\
+			<div class="aui-input-row">\
+				<span class="aui-input-addon">开始时间,如:10:15</span>\
+				<input type="text" class="aui-input" placeholder="开始时间" id="start_time">\
+			</div>';
+
+			if(int_type == false){
+			str1+='<div class="aui-input-row">\
+			<span class="aui-input-addon">结束时间,如:10:10</span> \
+				<input type="text" class="aui-input" placeholder="结束时间" id="end_time">\
+			</div>\
+			<div class="aui-btn-row">\
+				<div class="aui-btn aui-btn-block aui-btn-success" onchanged="input_cal_time()" onclick="input_cal_time()">计算</div>\
+			</div>\
+	</div>';
+	} else
+		{
+					str1+='<div class="aui-input-row">\
+			<span class="aui-input-addon">时间,如:10:10</span> \
+				<input type="text" class="aui-input" placeholder="结束时间" id="end_time">\
+			</div>\
+			<div class="aui-btn-row">\
+				<div class="aui-btn aui-btn-block aui-btn-success" onchanged="input_cal_time()" onclick="input_cal_time()">计算</div>\
+			</div>\
+	</div>';
+		}
+		input.innerHTML = str1;
+
+}
+
+
+
+//
+function open_time_int() {
+	var ratio = $api.byId("ratio_1");
+	ratio.innerHTML = "";
+	var periodSelector = api.require('periodSelector');
+	periodSelector.hide();
+	open_time_input(true,true);
+}
+function clear_data() {
+
+}
+		apiready = function() {
+			api.setRefreshHeaderInfo({
+				visible : true,
+				textDown : "清空数据",
+				textUp : "已清空",
+				showTime : true
+			}, function(ret, err) {
+				//coding...
+				//alert("go go go....");
+
+				var periodSelector = api.require('periodSelector');
+				periodSelector.set({lHour:0,lMinute:0,rHour:0,rMinute:0});
+			    var obj = document.getElementById("start_time");
+
+				if(obj != null)
+				{
+					obj.value="";
+				 	document.getElementById("end_time").value = "";
+				}
+				show_result("",true);
+				close_tips();
+				api.refreshHeaderLoadDone();
+			});
+			var periodSelector = api.require('periodSelector');
+			var $header = $api.byId('etc');
+			$api.fixIos7Bar($header);
+			var header_h = $api.offset($header).h;
+			periodSelector.open({
+				x : 0,
+				y : header_h + 180,
+				w : 'auto',
+				h : 15
+			}, function(ret, err) {
+				calTimeTime(ret);
+			});
+			var date = new Date();
+			hours = date.getHours();
+			minutes = date.getMinutes();
+			periodSelector.hide();
+
+			open_time_selector();
+		};
+	</script>
+</html>
