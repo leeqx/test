@@ -103,7 +103,7 @@
 					<div class="my_list_inner list" tapmode onclick="open_time_selector()" id='list'>
 						<a> 时间-时间 </a>
 					</div>
-					<div class="my_list_inner ticket" tapmode onclick="open_work_time()" id="tiecket">
+					<div class="my_list_inner ticket" tapmode onclick="open_work_time()" id="ticket">
 						<a> 排班表 </a>
 					</div->
 				</div>
@@ -128,6 +128,12 @@
 
 	<script type="text/javascript" src="../script/api.js"></script>
 	<script type="text/javascript">
+		var g_select_type = 1;//1时间计算 2-排班表
+		var g_open_calendar_setting = 0; //1打开设置，0关闭设置
+
+
+
+
 		function calTimeTime(data) {
 			var result = $api.byId('ret');
 			bHour = data.sHour;
@@ -230,16 +236,29 @@
 
 		function change_ratio_type() {
 			var periodSelector = api.require('periodSelector');
+
 			if (document.getElementById("selector").checked == true) {
-				clear_input();
-				periodSelector.show();
-				show_result("",true);
+				if(g_select_type ==1){
+					clear_input();
+					periodSelector.show();
+					show_result("",true);
+					open_calendar(false);
+				} else {
+					g_open_calendar_setting = 1;
+				}
+
 			} else  {
-				periodSelector.hide();
-				open_time_input(true,false);
-				show_result("",true);
+				if(g_select_type == 1)
+				{
+					periodSelector.hide();
+					open_time_input(true,false);
+					show_result("",true);
+					open_calendar(false);
+				} else {
+					g_open_calendar_setting = 0;
+				}
 			}
-			open_cal(false);
+
 		}
 
 		function open_time_selector() {
@@ -273,7 +292,7 @@
 			tips.innerHTML = "";
 		}
 		function open_time_input(show,int_type) {
-		open_cal(false);
+		open_calendar(false);
 		var input = $api.byId("etc");
 		var str1='\
 		<br/>\
@@ -323,11 +342,12 @@
 		{
 		}
 
-		function open_cal(show)
+		function open_calendar(show)
 		{
 			var UICalendar = api.require('UICalendar');
 			if(show==true)
 			{
+				g_select_type = 2;
 			   show_result("",false);
 
 				UICalendar.show();
@@ -353,13 +373,14 @@
 
 		//排班表
 		function open_work_time() {
+			g_select_type = 2;
 			var ratio = $api.byId("ratio_1");
 			ratio.innerHTML = "";
 			var periodSelector = api.require('periodSelector');
 			periodSelector.hide();
 			open_time_input(false,false);
-			open_cal(true);
-
+			open_calendar(true);
+			open_calendar_setting();
 		}
 
 
@@ -375,7 +396,33 @@
 		//当前显示的月份中最后一天什么状态，以便前进计算
 		var monthLastDayStatus=0;
 
+
+		function open_calendar_setting() {
+			var ratio = $api.byId("ratio_1");
+			/*ratio.innerHTML = '<label>选择类型</label>'+
+												'<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="selector" checked onchange="change_ratio_type()"  placeholder="开始时间"/> '+
+												 '<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="input" checked onchange="change_ratio_type()" value="输入框"> i</input>';
+			*/
+			ratio.innerHTML='<label>关闭设置/打开设置</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right"  id="selector" onchange="change_ratio_type()"/>';
+			change_ratio_type();
+
+		}
+
 		function show_select_date(data,show) {
+				//时间计算不显示日期表
+				if(g_select_type != 2 )
+					return;
+
+				if(g_open_calendar_setting == 0)
+				{
+					show_tips("设置功能已经关闭，请打开",true);
+					return;
+				}
+				if(g_select_type == 1)
+				{
+					UICalendar.hide();
+						return;
+				}
 				var pre="";
 
 				day_clicked[data.day]++;
@@ -392,7 +439,7 @@
 						  pre = "休 "+ day_clicked[data.day];
 						  genWorkDates(1,data);
 					} else {
-
+						genWorkDates(3,data);
 					}
 					show_tips("type:"+pre+" "+data.year + "-" +data.month+"-"+data.day,show);
 				} else {
@@ -449,47 +496,85 @@
 			//alert(JSON.stringify( [{bg:color,date:date.year+'-'+date.month+'-'+date.day}]));
 			return {bg:color,date:date.year+'-'+date.month+'-'+date.day,type:rawType};
 		}
+		function resetSpecialDays(date){
+			if(g_select_type == 1)
+				return ;
+			if(date == null)
+				date = new Date();
+
+			var clear_array = new Array;
+			for(var day=1,index=1;day<=getDaysOfMonth(date.month);day++)
+			{
+				date.day=day;
+				clear_array[index++]=date.year+"-"+date.month+"-"+date.day;
+			}
+			clearSpecialDays({specialDates:clear_array});
+		}
 		//// status:0 休 1 下 3上:参数说明表示date这一天是type状态（上、下、休）
 		function genWorkDates(type,date) {
 			var days = getDaysOfMonth(date.month);
-
+		    var rawType = type;
 			var array= new Array;
-			var clear_array = new Array;
 			array[0] = format_color(type,date);
-			clear_array[0]=date.year+"-"+date.month+"-"+date.day;
+			//当type=3市需要调整
 			if((type=(++type%4)) ==0)
 					type =1;
 
 			var msg;
+			var index=0;
+			resetSpecialDays(date);
+
 			for(var day=date.day+1,index=1;day<=days;day++)
 			{
 
 				date.day=day;
 				array[index++]=format_color(type,date);
-				clear_array[index-1]=date.year+"-"+date.month+"-"+date.day;
+
 				monthLastDayStatus = type;
 				type=(++type%4);
 				if(type ==0)
 					type =1;
 
 			}
-			var specialDays = {specialDates:array};
-			clearSpecialDays({specialDates:clear_array});
-			alert(JSON.stringify(specialDays));
+			var specialDays =  {specialDates:array};
+
+			//计算date.day 之前的本月的日期
+			var preArray= new Array;
+			type=rawType;
+
+			if(type%4 ==3)// 今天是3(下班） 那么昨天就是1（休息) 前天就是2(上班）
+					type =2;
+			else if(type%4 ==1)// 今天是1(休息） 那么昨天就是3（下班) 前天就是2(上班）
+					type =3;
+			else if(type%4 ==2)// 今天是2(上班） 那么昨天就是1（休息) 前天就是3(上班）
+					type =1;
+
+			preIndex=0
+			for(var day = date.day-1;0<day;day--)
+			{
+				date.day=day;
+				preArray[preIndex++]=format_color(type,date);
+
+				monthFirstDayStatus = type;
+				type=(--type%4);
+				if(type ==0)
+					type =3;
+			}
+			var preSpecialDays = {specialDates:preArray};
+			//alert(JSON.stringify(specialDays));
 			setSpecialDays(specialDays);
+			setSpecialDays(preSpecialDays);
 		}
 		function clearSpecialDays(data) {
 			   var UICalendar = api.require('UICalendar');
 
 				UICalendar.show();
-				show_tips(data);
 				UICalendar.cancelSpecialDates(data);
 		}
 		function setSpecialDays(data) {
 			   var UICalendar = api.require('UICalendar');
 
 				UICalendar.show();
-				show_tips(data);
 				UICalendar.setSpecialDates(data);
 		}
 		apiready = function() {
@@ -568,7 +653,7 @@
 					    }
 					});
 					UICalendar.hide();
-
+					resetSpecialDays();
 		};
 	</script>
 </html>
