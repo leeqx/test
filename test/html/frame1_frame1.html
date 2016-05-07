@@ -262,12 +262,13 @@
 		}
 
 		function open_time_selector() {
+			g_select_type = 1;
 			var ratio = $api.byId("ratio_1");
 			/*ratio.innerHTML = '<label>选择类型</label>'+
 												'<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="selector" checked onchange="change_ratio_type()"  placeholder="开始时间"/> '+
 												 '<input class="aui-pull-right aui-radio aui-radio-success" type="radio" name="type" id="input" checked onchange="change_ratio_type()" value="输入框"> i</input>';
 			*/
-			ratio.innerHTML='<label>关闭/打开滚轮</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right" checked id="selector" onchange="change_ratio_type()"、>';
+			ratio.innerHTML='<label>关闭/打开滚轮</label> <input type="checkbox" class="aui-switch aui-switch-primary aui-pull-right" checked id="selector" onchange="change_ratio_type()"/>';
 			change_ratio_type();
 
 		}
@@ -351,7 +352,7 @@
 			   show_result("",false);
 
 				UICalendar.show();
-				UICalendar.setSpecialDates({
+			/*	UICalendar.setSpecialDates({
 				    specialDates:[{
 				    						date:'2016-05-01',
 				    						bg: workColor
@@ -362,7 +363,7 @@
 				    						date:'2016-05-03',
 				    						bg:unworkColor
 				    					}]
-				});
+				});*/
 
 
 				}else {
